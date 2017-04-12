@@ -14,6 +14,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -177,8 +179,9 @@ public class TranscriptionSearchAndReplaceAction extends ComaAction
 							List<Element> parts = evx.selectNodes(myPartiture
 									.getDocument().getRootElement());
 							for (Element e : parts) {
-								String r = e.getText().replaceAll(searchString,
-										replaceString);
+								Pattern p = Pattern.compile(searchString);
+                                                                Matcher m = p.matcher(e.getText());
+                                                                String r = m.replaceAll(replaceString);
 								if (!r.equals(e.getText())) {
 									changed++;
 									System.out.println(e.getText() + " > " + r);
