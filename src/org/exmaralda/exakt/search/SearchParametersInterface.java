@@ -18,6 +18,7 @@ public interface SearchParametersInterface {
     public static final int DEFAULT_SEARCH = 0;
     public static final int COMPONENT_SEARCH = 1;
     public static final int ANNOTATION_SEARCH = 2;
+    public static final int INDIRECT_ANNOTATION_SEARCH = 3;
     
     public String getSearchExpressionAsString();
     
