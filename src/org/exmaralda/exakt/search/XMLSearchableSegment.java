@@ -144,6 +144,73 @@ public class XMLSearchableSegment implements SearchableSegmentInterface{
                         ex.printStackTrace();
                     }
                 }
+                else if (searchParameters.getSearchType()==SearchParametersInterface.INDIRECT_ANNOTATION_SEARCH){
+                    try {
+                        // ***** NEW
+                        String annotationStart = searchableElement.getAttributeValue("s");
+                        String annotationEnd = searchableElement.getAttributeValue("e");
+                        String annotationRefID = searchableElement.getAttributeValue("ref-id");
+                        
+                        //System.out.println("Trying to find a match for " + annotationStart + " / " + annotationEnd);
+                        // change to account for new annotations from tagging, 17-05-2011
+                        //String segmentationName = "SpeakerContribution_Event";
+                        //String xpstring = "../../segmentation[@name='" + segmentationName + "']/ts/ts[@s='" + annotationStart + "' and @e='" + annotationEnd + "']";
+                        String xpstring = "../../segmentation/descendant::ts[@s='" + annotationStart + "' and @e='" + annotationEnd + "']";
+                        if (annotationRefID!=null){
+                            xpstring = "../../segmentation/descendant::ts[@id='" + annotationRefID + "']";
+                        }
+                        //System.out.println(xpstring);
+                        XPath xp = XPath.newInstance(xpstring);
+                        Element annotatedElement = (Element)(xp.selectSingleNode(searchableElement));
+                        if (annotatedElement!=null){
+                            //System.out.println("Found one: " + annotatedElement.getAttributeValue("id"));
+                            AnnotationSearchResult asr = new AnnotationSearchResult(searchString, matcher.start(), matcher.end(),
+                                                            sp.getContextLimit(), segmentLocator, getAdditionalData(), annotatedElement);
+                            returnValue.addSearchResult(asr);
+                        } else {
+                            //System.out.println("Found none :-(");
+
+                            // TODO!!!
+                            // Here lies a rabbit in the pepper...
+                            // if the annotation refers to a sequence of, rather than a single annotated element
+                            // nothing is found
+                            String xpstring2 = "../../segmentation[@name='SpeakerContribution_Event']/ts/ts[@s='" + annotationStart + "']";
+                            //System.out.println(xpstring2);
+                            XPath xp2 = XPath.newInstance(xpstring2);
+                            List aes = xp2.selectNodes(searchableElement);
+                            boolean found = false;
+                            Vector<Element> allAnnotated = null;
+                            for (Object o : aes){
+                                if (!(o instanceof Element)) continue;
+                                Element ae = (Element)o;
+                                Element parentSC = ae.getParentElement();
+                                int indexInParent = parentSC.indexOf(ae);
+                                allAnnotated = new Vector<Element>();
+                                allAnnotated.add(ae);
+                                for (int i=indexInParent+1; i<parentSC.getContentSize(); i++){
+                                    if (!(parentSC.getContent(i) instanceof Element)) continue;
+                                    Element nextElement = (Element)(parentSC.getContent(i));
+                                    allAnnotated.add(nextElement);
+                                    Attribute end = nextElement.getAttribute("e");
+                                    if ((end!=null) && (end.getValue().equals(annotationEnd))){
+                                        //i.e. this the last segment of the annotated chain
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                if (found) break;
+                            }
+                            if (found){
+                                Element[] annotatedElements = allAnnotated.toArray(new Element[1]);
+                                AnnotationSearchResult asr = new AnnotationSearchResult(searchString, matcher.start(), matcher.end(),
+                                                                sp.getContextLimit(), segmentLocator, getAdditionalData(), annotatedElements);
+                                returnValue.addSearchResult(asr);
+                            }
+                        } 
+                    } catch (JDOMException ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }                    
             return returnValue;
         } else if (sp instanceof XPathSearchParameters){
