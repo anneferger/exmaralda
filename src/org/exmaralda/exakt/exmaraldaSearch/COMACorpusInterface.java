@@ -36,7 +36,7 @@ public interface COMACorpusInterface extends CorpusInterface {
     /** returns all names of description tiers in this corpus */
     HashSet<String> getDescriptionNames();
 
-    /** returns all names of segmenations in this corpus */
+    /** returns all names of segmentations in this corpus */
     HashSet<String> getSegmentationNames();
 
     /** returns all communication metadata attributes in this corpus */
