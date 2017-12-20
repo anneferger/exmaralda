@@ -129,7 +129,7 @@ public class XMLCorpusComponent implements CorpusComponentInterface {
                 SearchResultList thisResult = ss.search(searchParameters);
                 searchResult.addSearchResults(thisResult);
             }        
-        } else if (searchParameters.getSearchType() == SearchParametersInterface.ANNOTATION_SEARCH){
+        } else if (searchParameters.getSearchType() == SearchParametersInterface.ANNOTATION_SEARCH || searchParameters.getSearchType() == SearchParametersInterface.INDIRECT_ANNOTATION_SEARCH){
             // NEW 07 AUGUST 2008
             // delegate the search to the searchable segments
             while (hasNext()){
