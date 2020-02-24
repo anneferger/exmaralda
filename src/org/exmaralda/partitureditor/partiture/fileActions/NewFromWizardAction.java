@@ -70,6 +70,7 @@ public class NewFromWizardAction extends org.exmaralda.partitureditor.partiture.
 
             Object[] data = wizard.getData();
             MetaInformation metaInformation = (MetaInformation)(data[0]);
+                        //Element speaker metadata
             String[] recordings = (String[])(data[1]);
             String[] speakers = (String[])(data[2]);
             String mainCategory = (String)(data[3]);
@@ -92,6 +93,7 @@ public class NewFromWizardAction extends org.exmaralda.partitureditor.partiture.
             if (refFiles.size()>0){
                 metaInformation.setReferencedFiles(refFiles);
             }
+            //this should be used in the 'update metdadata from Coma' - there needs to be choosen a coma file too
             newTranscription.getHead().setMetaInformation(metaInformation);
 
             // speakers
@@ -100,6 +102,15 @@ public class NewFromWizardAction extends org.exmaralda.partitureditor.partiture.
                 Speaker newSpeaker = new Speaker();
                 newSpeaker.setID("SPK" + Integer.toString(count));
                 newSpeaker.setAbbreviation(abb);
+                //char s is needed: 'u' or 'm' or 'f'
+                newSpeaker.setSex('u');
+                //here is more than one value possible: Languages l is used
+                //newSpeaker.setLanguagesUsed();
+                //here needs to be used UDInformationHashtable i
+                //locations aren't there in exbs, maybe just UDinfo?
+                //setUDSpeakerInformation();
+                
+                
                 try {
                     newTranscription.getHead().getSpeakertable().addSpeaker(newSpeaker);
                 } catch (JexmaraldaException ex) {

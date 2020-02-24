@@ -39,10 +39,10 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
      */
     public static void main(String[] args) {
         try {
-            //String corpusFilename = "S:\\TP-Z2\\DATEN\\K2\\0.6\\K2_Corpus.xml";
-            //String output = "S:\\TP-Z2\\DATEN\\K2\\0.6\\output\\out.txt";
-            String corpusFilename = args[0];
-            String output = args[1];
+            String corpusFilename = "E:\\Anne\\exmaralda-demo-corpus\\EXMARaLDA_DemoKorpus.coma";
+            String output = "C:\\Users\\fsnv625\\Desktop\\output.txt";
+            //String corpusFilename = args[0];
+            //String output = args[1];
             TransferMetaData tmd = new TransferMetaData(corpusFilename);
             tmd.doIt();
             tmd.output(output);
@@ -62,7 +62,8 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
             Element key = (Element)o;
             String keyname = key.getAttributeValue("Name");
             String keyvalue = key.getText();
-            ud.setAttribute(suffix + ":" + keyname, keyvalue);
+            //ud.setAttribute(suffix + ":" + keyname, keyvalue);
+            ud.setAttribute(keyname, keyvalue);
             outappend(keyname + "\t" + keyvalue + "\n");
         }
     }
@@ -84,13 +85,16 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
         udMeta.setAttribute("COMA-Transcription-ID", tID);
         udMeta.setAttribute("COMA-Communication-ID", cID);
         
-        List transcriptionMeta = get("../Description/Key", getCurrentCorpusNode());
-        out.append(transcriptionMeta.size() + " transcription attributes\n");
-        transfer(transcriptionMeta, udMeta, "t");
+//        List transcriptionMeta = get("../Description/Key", getCurrentCorpusNode());
+//        out.append(transcriptionMeta.size() + " transcription attributes\n");
+//        transfer(transcriptionMeta, udMeta, "t");
         
         List communicationMeta = get("../../Description/Key", getCurrentCorpusNode());
+        List communicationLocationMeta = get("../../Location", getCurrentCorpusNode());
+        communicationMeta.addAll(communicationLocationMeta);
         out.append(communicationMeta.size() + " communication attributes\n");
-        transfer(communicationMeta, udMeta, "c");
+        //transfer(communicationMeta, udMeta, "c");
+        transfer(communicationMeta, udMeta, "");
         try {            
             Document tDocument = FileIO.readDocumentFromLocalFile(getCurrentFilename());
             List speakers = uniqueSpeakerDistinction.selectNodes(tDocument);
@@ -111,8 +115,9 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
                     udinfo.setAttribute("Pseudo", pseudoName);          
                     System.out.println(pseudoName);
                     List speakerMeta = get("Description/Key",speakerInComa);
-                    transfer(speakerMeta,udinfo,"s");
-                    List firstLanguages = get("Language[Description/Key[@Name='Status']='L1']/LanguageCode",speakerInComa);
+                    //transfer(speakerMeta,udinfo,"s");
+                    transfer(speakerMeta,udinfo,"");
+                    List firstLanguages = get("Language[@Type='L1']/LanguageCode",speakerInComa);
                     speaker.getL1().clear();
                     for (Object l : firstLanguages){
                         Element l1 = (Element)l;
@@ -120,7 +125,7 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
                         System.out.println("Language1: " + lang);
                         speaker.getL1().addLanguage(lang);
                     }
-                    List secondLanguages = get("Language[Description/Key[@Name='Status']='L2']/LanguageCode",speakerInComa);
+                    List secondLanguages = get("Language[@Type='L2']/LanguageCode",speakerInComa);
                     speaker.getL2().clear();
                     for (Object l : secondLanguages){
                         Element l2 = (Element)l;
@@ -128,6 +133,21 @@ public class TransferMetaData extends AbstractBasicTranscriptionProcessor {
                         System.out.println("Language2: " + lang);
                         speaker.getL2().addLanguage(lang);
                     }
+                   Element sexOfSpeaker = (Element)(getSingle("Sex",speakerInComa));
+                   speaker.getSex();
+                    char sexChar;
+                    if(sexOfSpeaker.getText().equals("female")){
+                        sexChar = 'f';
+                    }
+                    else if (sexOfSpeaker.getText().equals("male")){
+                        sexChar = 'm';
+                    }
+                    else {
+                        sexChar = 'u';                       
+                    }                  
+                    speaker.setSex(sexChar); 
+                    System.out.println(sexChar);
+                    
                 } catch (JexmaraldaException ex) {
                     ex.printStackTrace();
                 }
