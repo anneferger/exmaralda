@@ -155,26 +155,27 @@ public class XMLSearchableSegment implements SearchableSegmentInterface{
                         // change to account for new annotations from tagging, 17-05-2011
                         //String segmentationName = "SpeakerContribution_Event";
                         //String xpstring = "../../segmentation[@name='" + segmentationName + "']/ts/ts[@s='" + annotationStart + "' and @e='" + annotationEnd + "']";
-                        String xpstring = "../../segmentation/descendant::ts[@s='" + annotationStart + "' and @e='" + annotationEnd + "']";
+                        // Here needs to be an option to choose a segmentation to be displayed to the match as a parameter
+                        //and here is the problem with the whole segmentation search and timelineitems etc ... :(
+                        //here needs to be something like: the annoatation only needs to be contained in the utterance/sentence whatever
+                        String xpstring = "../../segmentation[@name='SpeakerContribution_Utterance_Word']//ts[@n='HIAT:u' and descendant::ts[@s='" + annotationStart + "' and @e='" + annotationEnd + "']]";
                         if (annotationRefID!=null){
-                            xpstring = "../../segmentation/descendant::ts[@id='" + annotationRefID + "']";
+                            xpstring = "../../segmentation[@name='SpeakerContribution_Utterance_Word']//ts[@n='HIAT:u' and descendant::ts[@id='" + annotationRefID + "']]";
                         }
-                        //System.out.println(xpstring);
+                        System.out.println(xpstring);
                         XPath xp = XPath.newInstance(xpstring);
                         Element annotatedElement = (Element)(xp.selectSingleNode(searchableElement));
                         if (annotatedElement!=null){
-                            //System.out.println("Found one: " + annotatedElement.getAttributeValue("id"));
+                            System.out.println("Found one: " + annotatedElement.getAttributeValue("id"));
                             AnnotationSearchResult asr = new AnnotationSearchResult(searchString, matcher.start(), matcher.end(),
                                                             sp.getContextLimit(), segmentLocator, getAdditionalData(), annotatedElement);
                             returnValue.addSearchResult(asr);
                         } else {
                             //System.out.println("Found none :-(");
 
-                            // TODO!!!
-                            // Here lies a rabbit in the pepper...
-                            // if the annotation refers to a sequence of, rather than a single annotated element
-                            // nothing is found
-                            String xpstring2 = "../../segmentation[@name='SpeakerContribution_Event']/ts/ts[@s='" + annotationStart + "']";
+                            // Here needs to be an option to choose a segmentation to be displayed to the match as a parameter
+                            //and here is the problem with the whole segmentation search and timelineitems etc ... :(
+                            String xpstring2 = "../../segmentation[@name='SpeakerContribution_Utterance_Word']/ts/ts[@n='HIAT:u']/ts[@s='" + annotationStart + "']";
                             //System.out.println(xpstring2);
                             XPath xp2 = XPath.newInstance(xpstring2);
                             List aes = xp2.selectNodes(searchableElement);

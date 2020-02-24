@@ -489,21 +489,33 @@ public class SearchResultList extends Vector<SearchResultInterface> {
     //public static final int ANY_OVERLAP = 2;
     public static final int PRECEDING = 3;
     public static final int FOLLOWING = 4;
+    public static final String DEFAULT_TIER_CATEGORY = "";
+    //By default add every annotation that was found
+    public static final String DEFAULT_ADDITIONAL_REGEX = ".*";
     //MAX_DISTANCE is still to do
     //Hm, I'm not sure if it's enough to choose the tier category and the speaker - because there 
     //could be more than one of this type of tier in the transcription? - Probably need to 
     //solve/check this later
+    //
 
     public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMASearchResultListTableModel tm, int overlapType, int maxDistance, boolean findAll) throws SAXException {
         tableModel = tm;
         COMACorpusInterface corpus = tableModel.getCorpus();
-        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance, findAll, "");
+        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance, "", findAll,  ".*");
+    }
+    
+    public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMASearchResultListTableModel tm, int overlapType, int maxDistance, boolean findAll, String annotatedCategory) throws SAXException {
+        tableModel = tm;
+        COMACorpusInterface corpus = tableModel.getCorpus();
+        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance,  "", findAll, ".*");
     }
 
-    public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMACorpusInterface corpus, int overlapType, int maxDistance, boolean findAll) throws SAXException {
-        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance, findAll, "");
+    public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMACorpusInterface corpus, int overlapType, int maxDistance, boolean findAll, String regEx) throws SAXException {
+        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance,  "", findAll, regEx);
     }
-
+ public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMACorpusInterface corpus, int overlapType, int maxDistance, boolean findAll) throws SAXException {
+        return addIndirectAnnotationAsAnalysis(tierCategory, corpus, overlapType, maxDistance, "", findAll,  ".*");
+    }
     //copied from AddAnnotationAsAnalysis:
     // 06-08-2010: this is the next big thing
     // Timm aka Dart Vader wants it:
@@ -513,7 +525,7 @@ public class SearchResultList extends Vector<SearchResultInterface> {
     /*
     *
      */
-    public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMACorpusInterface corpus, int overlapType, int maxDistance, boolean findAll, String annotatedCategory) throws SAXException {
+    public SearchResultList addIndirectAnnotationAsAnalysis(String tierCategory, COMACorpusInterface corpus, int overlapType, int maxDistance, String annotatedCategory, boolean findAll,  String RegEx) throws SAXException {
         SearchResultList returnValue = new SearchResultList();
         // go through all search results
         // copy all the information
@@ -707,8 +719,8 @@ public class SearchResultList extends Vector<SearchResultInterface> {
                         break;
                     case PRECEDING:
                         tl = bt.getBody().getCommonTimeline();
-                        //now we want all the Events before the match
-                        annotations = annotationTier.getEventsBetween(bt.getBody().getCommonTimeline(), tl.getTimelineItemAt(size()).getID(), startID2);
+                        //now we want all the Events before the start of the match
+                        annotations = annotationTier.getEventsBetween(bt.getBody().getCommonTimeline(), tl.getTimelineItemAt(0).getID(), endID2);
                         //System.out.println(annotations);
                         //startID of the match
                         startIndex = tl.lookupID(startID2);
@@ -724,7 +736,7 @@ public class SearchResultList extends Vector<SearchResultInterface> {
                             //System.out.println(index2 + " " + startIndex);
                             //now take that if the endindex of the annotation is smaller or same than the startindex of the match
                             if (index2 <= startIndex && annotatedCategory.equals("")) {
-                                annotationValue = e.getDescription();
+                                annotationValue = e.getDescription() + " " + e.getStart();
                                 if (!findAll) {
                                     break;
                                 }
@@ -756,8 +768,8 @@ public class SearchResultList extends Vector<SearchResultInterface> {
                                             annotation2 = annotationTier2.getEventAtStartPoint(e.getStart());
                                             //System.out.println(annotation2.getDescription());
                                             if ((annotation2 != null) && (annotation2.getEnd().equals(e.getEnd()))) {
-                                                annotationValue = annotation2.getDescription();
-                                                System.out.println(annotationValue);
+                                                annotationValue = annotation2.getDescription() + " " + annotation2.getStart();
+                                                System.out.println(annotationValue + annotation2.getStart());
                                             }
                                         }
                                         break;
@@ -773,19 +785,23 @@ public class SearchResultList extends Vector<SearchResultInterface> {
 
                     case FOLLOWING:
                         tl = bt.getBody().getCommonTimeline();
-                        //now we want all the Events after the match
-                        annotations = annotationTier.getEventsBetween(bt.getBody().getCommonTimeline(), endID2, tl.getTimelineItemAt(0).getID());
+                        //now we want all the Events after the end of the match
+                        annotations = annotationTier.getEventsBetween(bt.getBody().getCommonTimeline(), endID2, tl.getTimelineItemAt(size()).getID());
                         //endID of the match
                         endIndex = tl.lookupID(endID2);
+                        //System.out.println(endIndex);
+                        //got trough all the annotations (starting with the closest) 
+                        //and check if the end of them is before the start of the match
+                        //System.out.println(annotations.size());
                         for (Event e : annotations) {
                             int index2 = tl.lookupID(e.getStart());
-                            //now take that if the startindex of the annotation is bigger than the endindex of the match
+                            //now take that if the endindex of the annotation is smaller(or same) than the startindex of the match
                             if (index2 >= endIndex && annotatedCategory.equals("")) {
-                                annotationValue = e.getDescription();
+                                annotationValue = e.getDescription() + " " + e.getStart();
                                 if (!findAll) {
                                     break;
                                 }
-                                //now this checks if there is a direct annotation in another tier wanted as output (very special case)
+                             //now this checks if there is a direct annotation in another tier wanted as output (very special case)
                             } else if (!annotatedCategory.equals("")) {
                                 //System.out.println("Arrived in the if loop");
                                 Tier annotationTier2 = null;
@@ -813,7 +829,7 @@ public class SearchResultList extends Vector<SearchResultInterface> {
                                             annotation2 = annotationTier2.getEventAtStartPoint(e.getStart());
                                             //System.out.println(annotation2.getDescription());
                                             if ((annotation2 != null) && (annotation2.getEnd().equals(e.getEnd()))) {
-                                                annotationValue = annotation2.getDescription();
+                                                annotationValue = annotation2.getDescription() + " " + annotation2.getStart();
                                                 System.out.println(annotationValue);
                                             }
                                         }
